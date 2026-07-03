@@ -1,0 +1,215 @@
+services:
+  # ===== Databases (one per service) =====
+  postgres-users:
+    image: postgres:16-alpine
+    container_name: fd-postgres-users
+    environment:
+      POSTGRES_DB: user_service
+      POSTGRES_USER: fd_user
+      POSTGRES_PASSWORD: fd_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - pg_users_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U fd_user -d user_service"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  postgres-restaurants:
+    image: postgis/postgis:16-3.4-alpine
+    container_name: fd-postgres-restaurants
+    environment:
+      POSTGRES_DB: restaurant_service
+      POSTGRES_USER: fd_user
+      POSTGRES_PASSWORD: fd_password
+    ports:
+      - "5433:5432"
+    volumes:
+      - pg_restaurants_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U fd_user -d restaurant_service"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  postgres-orders:
+    image: postgres:16-alpine
+    container_name: fd-postgres-orders
+    environment:
+      POSTGRES_DB: order_service
+      POSTGRES_USER: fd_user
+      POSTGRES_PASSWORD: fd_password
+    ports:
+      - "5434:5432"
+    volumes:
+      - pg_orders_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U fd_user -d order_service"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  postgres-delivery:
+    image: postgres:16-alpine
+    container_name: fd-postgres-delivery
+    environment:
+      POSTGRES_DB: delivery_service
+      POSTGRES_USER: fd_user
+      POSTGRES_PASSWORD: fd_password
+    ports:
+      - "5435:5432"
+    volumes:
+      - pg_delivery_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U fd_user -d delivery_service"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  postgres-payments:
+    image: postgres:16-alpine
+    container_name: fd-postgres-payments
+    environment:
+      POSTGRES_DB: payment_service
+      POSTGRES_USER: fd_user
+      POSTGRES_PASSWORD: fd_password
+    ports:
+      - "5436:5432"
+    volumes:
+      - pg_payments_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U fd_user -d payment_service"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  postgres-notifications:
+    image: postgres:16-alpine
+    container_name: fd-postgres-notifications
+    environment:
+      POSTGRES_DB: notification_service
+      POSTGRES_USER: fd_user
+      POSTGRES_PASSWORD: fd_password
+    ports:
+      - "5437:5432"
+    volumes:
+      - pg_notifications_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U fd_user -d notification_service"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  postgres-search:
+    image: postgis/postgis:16-3.4-alpine
+    container_name: fd-postgres-search
+    environment:
+      POSTGRES_DB: search_service
+      POSTGRES_USER: fd_user
+      POSTGRES_PASSWORD: fd_password
+    ports:
+      - "5438:5432"
+    volumes:
+      - pg_search_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U fd_user -d search_service"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # ===== Cache =====
+  redis:
+    image: redis:7-alpine
+    container_name: fd-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # ===== Message Broker =====
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    container_name: fd-rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: fd_user
+      RABBITMQ_DEFAULT_PASS: fd_password
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "check_port_connectivity"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ===== Auth =====
+  keycloak:
+    image: quay.io/keycloak/keycloak:24.0.5
+    container_name: fd-keycloak
+    command: start-dev --import-realm
+    environment:
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://postgres-users:5432/user_service
+      KC_DB_USERNAME: fd_user
+      KC_DB_PASSWORD: fd_password
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./config/keycloak:/opt/keycloak/data/import
+    depends_on:
+      postgres-users:
+        condition: service_healthy
+
+  # ===== Observability =====
+  zipkin:
+    image: openzipkin/zipkin:3
+    container_name: fd-zipkin
+    ports:
+      - "9411:9411"
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: fd-prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./config/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: fd-grafana
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
+    ports:
+      - "3000:3000"
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./config/grafana/provisioning:/etc/grafana/provisioning:ro
+    depends_on:
+      - prometheus
+
+volumes:
+  pg_users_data:
+  pg_restaurants_data:
+  pg_orders_data:
+  pg_delivery_data:
+  pg_payments_data:
+  pg_notifications_data:
+  pg_search_data:
+  redis_data:
+  rabbitmq_data:
+  prometheus_data:
+  grafana_data:
