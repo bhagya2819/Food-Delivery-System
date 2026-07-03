@@ -1,0 +1,19 @@
+plugins {
+    java
+    alias(libs.plugins.spring.boot)
+    alias(libs.plugins.spring.dependency.management)
+}
+
+dependencyManagement {
+    imports {
+        mavenBom("org.springframework.cloud:spring-cloud-dependencies:${libs.versions.spring.cloud.get()}")
+    }
+}
+
+dependencies {
+    implementation(project(":common:common-lib"))
+    implementation(project(":common:common-config"))
+    implementation(libs.spring.boot.starter.web)
+    implementation(libs.spring.boot.starter.data.jpa)
+    implementation(libs.spring.cloud.starter.netflix.eureka.client)
+}
