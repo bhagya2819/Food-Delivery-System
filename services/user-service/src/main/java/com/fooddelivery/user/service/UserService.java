@@ -10,17 +10,20 @@ import com.fooddelivery.user.entity.User;
 import com.fooddelivery.user.entity.UserRole;
 import com.fooddelivery.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.UUID;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class UserService {
 
     private final UserRepository userRepository;
+    private final KeycloakService keycloakService;
     private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
     @Transactional
@@ -40,6 +43,8 @@ public class UserService {
 
         user = userRepository.save(user);
 
+        keycloakService.createKeycloakUser(user, request.getPassword());
+
         return AuthResponse.builder()
                 .token("dummy-token-" + user.getId())
                 .user(toUserResponse(user))
@@ -58,6 +63,8 @@ public class UserService {
             throw new UnauthorizedException("Account is deactivated");
         }
 
+        // Token will be issued by Keycloak via the Gateway/Frontend.
+        // User Service validates the user exists; actual JWT comes from OAuth2 flow.
         return AuthResponse.builder()
                 .token("dummy-token-" + user.getId())
                 .user(toUserResponse(user))

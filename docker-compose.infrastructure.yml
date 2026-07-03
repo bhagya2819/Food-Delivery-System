@@ -164,7 +164,7 @@ services:
       KC_DB_USERNAME: fd_user
       KC_DB_PASSWORD: fd_password
     ports:
-      - "8080:8080"
+      - "9990:8080"
     volumes:
       - ./config/keycloak:/opt/keycloak/data/import
     depends_on:

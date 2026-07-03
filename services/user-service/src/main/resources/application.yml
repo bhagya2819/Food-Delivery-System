@@ -23,6 +23,12 @@ eureka:
     service-url:
       defaultZone: http://localhost:8761/eureka
 
+keycloak:
+  auth-server-url: http://localhost:9990
+  realm: food-delivery
+  client-id: food-delivery-gateway
+  client-secret: dummy-secret
+
 management:
   endpoints:
     web:
