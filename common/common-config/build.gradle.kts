@@ -18,6 +18,9 @@ dependencyManagement {
 
 dependencies {
     api(project(":common:common-lib"))
+    implementation("org.springframework.boot:spring-boot-starter-web")
+    implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310")
+    implementation("io.github.openfeign:feign-core")
     compileOnly(libs.lombok)
     annotationProcessor(libs.lombok)
 }
