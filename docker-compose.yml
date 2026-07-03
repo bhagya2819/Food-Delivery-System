@@ -1,0 +1,184 @@
+# Full local development environment
+# Start infrastructure only: docker compose -f docker-compose.infrastructure.yml up -d
+# Start everything:        docker compose up -d
+# Stop everything:         docker compose down -v
+
+include:
+  - docker-compose.infrastructure.yml
+
+services:
+  # ===== Eureka Server =====
+  eureka-server:
+    build:
+      context: ./infrastructure/eureka-server
+      dockerfile: Dockerfile
+    container_name: fd-eureka-server
+    ports:
+      - "8761:8761"
+    environment:
+      JAVA_TOOL_OPTIONS: "-Dspring.profiles.active=docker"
+    depends_on:
+      postgres-users:
+        condition: service_healthy
+
+  # ===== Config Server =====
+  config-server:
+    build:
+      context: ./infrastructure/config-server
+      dockerfile: Dockerfile
+    container_name: fd-config-server
+    ports:
+      - "8888:8888"
+    environment:
+      JAVA_TOOL_OPTIONS: "-Dspring.profiles.active=docker"
+    depends_on:
+      eureka-server:
+        condition: service_started
+
+  # ===== API Gateway =====
+  gateway-service:
+    build:
+      context: ./infrastructure/gateway-service
+      dockerfile: Dockerfile
+    container_name: fd-gateway-service
+    ports:
+      - "8080:8080"
+    environment:
+      JAVA_TOOL_OPTIONS: "-Dspring.profiles.active=docker"
+    depends_on:
+      config-server:
+        condition: service_started
+      keycloak:
+        condition: service_started
+
+  # ===== Business Services =====
+
+  user-service:
+    build:
+      context: ./services/user-service
+      dockerfile: Dockerfile
+    container_name: fd-user-service
+    ports:
+      - "8081:8081"
+    environment:
+      JAVA_TOOL_OPTIONS: "-Dspring.profiles.active=docker"
+    depends_on:
+      postgres-users:
+        condition: service_healthy
+      config-server:
+        condition: service_started
+
+  restaurant-service:
+    build:
+      context: ./services/restaurant-service
+      dockerfile: Dockerfile
+    container_name: fd-restaurant-service
+    ports:
+      - "8082:8082"
+    environment:
+      JAVA_TOOL_OPTIONS: "-Dspring.profiles.active=docker"
+    depends_on:
+      postgres-restaurants:
+        condition: service_healthy
+      config-server:
+        condition: service_started
+
+  cart-service:
+    build:
+      context: ./services/cart-service
+      dockerfile: Dockerfile
+    container_name: fd-cart-service
+    ports:
+      - "8083:8083"
+    environment:
+      JAVA_TOOL_OPTIONS: "-Dspring.profiles.active=docker"
+    depends_on:
+      redis:
+        condition: service_healthy
+      config-server:
+        condition: service_started
+
+  order-service:
+    build:
+      context: ./services/order-service
+      dockerfile: Dockerfile
+    container_name: fd-order-service
+    ports:
+      - "8084:8084"
+    environment:
+      JAVA_TOOL_OPTIONS: "-Dspring.profiles.active=docker"
+    depends_on:
+      postgres-orders:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      config-server:
+        condition: service_started
+
+  delivery-service:
+    build:
+      context: ./services/delivery-service
+      dockerfile: Dockerfile
+    container_name: fd-delivery-service
+    ports:
+      - "8085:8085"
+    environment:
+      JAVA_TOOL_OPTIONS: "-Dspring.profiles.active=docker"
+    depends_on:
+      postgres-delivery:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      config-server:
+        condition: service_started
+
+  payment-service:
+    build:
+      context: ./services/payment-service
+      dockerfile: Dockerfile
+    container_name: fd-payment-service
+    ports:
+      - "8086:8086"
+    environment:
+      JAVA_TOOL_OPTIONS: "-Dspring.profiles.active=docker"
+    depends_on:
+      postgres-payments:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      config-server:
+        condition: service_started
+
+  notification-service:
+    build:
+      context: ./services/notification-service
+      dockerfile: Dockerfile
+    container_name: fd-notification-service
+    ports:
+      - "8087:8087"
+    environment:
+      JAVA_TOOL_OPTIONS: "-Dspring.profiles.active=docker"
+    depends_on:
+      postgres-notifications:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      config-server:
+        condition: service_started
+
+  search-service:
+    build:
+      context: ./services/search-service
+      dockerfile: Dockerfile
+    container_name: fd-search-service
+    ports:
+      - "8088:8088"
+    environment:
+      JAVA_TOOL_OPTIONS: "-Dspring.profiles.active=docker"
+    depends_on:
+      postgres-search:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      config-server:
+        condition: service_started
