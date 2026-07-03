@@ -16,6 +16,7 @@ dependencies {
     implementation(project(":common:common-config"))
     implementation(libs.spring.boot.starter.web)
     implementation(libs.spring.boot.starter.data.jpa)
+    implementation(libs.spring.boot.starter.validation)
     implementation(libs.spring.cloud.starter.netflix.eureka.client)
     implementation(libs.postgresql)
     implementation(libs.flyway.core)
