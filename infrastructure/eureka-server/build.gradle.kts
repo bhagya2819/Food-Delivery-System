@@ -13,4 +13,6 @@ dependencyManagement {
 
 dependencies {
     implementation(libs.spring.cloud.starter.netflix.eureka.server)
+    implementation(libs.spring.boot.starter.actuator)
+    implementation(libs.micrometer.registry.prometheus)
 }
