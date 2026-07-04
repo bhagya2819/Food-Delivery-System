@@ -1,15 +1,16 @@
 package com.fooddelivery.restaurant.service;
 
-import com.fooddelivery.common.lib.exception.BadRequestException;
 import com.fooddelivery.common.lib.exception.NotFoundException;
 import com.fooddelivery.restaurant.dto.RestaurantRequest;
 import com.fooddelivery.restaurant.dto.RestaurantResponse;
 import com.fooddelivery.restaurant.entity.Restaurant;
 import com.fooddelivery.restaurant.repository.RestaurantRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -65,6 +66,26 @@ public class RestaurantService {
 
     public List<RestaurantResponse> getByOwner(UUID ownerId) {
         return restaurantRepository.findByOwnerId(ownerId).stream()
+                .map(this::toResponse)
+                .toList();
+    }
+
+    @Cacheable(value = "restaurant_search", key = "{#name, #cuisine, #city}")
+    public List<RestaurantResponse> search(String name, String cuisine, String city) {
+        List<Restaurant> results = new ArrayList<>();
+
+        if (name != null && !name.isBlank()) {
+            results = restaurantRepository.findByNameContainingIgnoreCaseAndActiveTrue(name);
+        } else if (cuisine != null && !cuisine.isBlank()) {
+            results = restaurantRepository.findByCuisineTypeAndActiveTrue(cuisine);
+        } else if (city != null && !city.isBlank()) {
+            results = restaurantRepository.findByCityAndActiveTrue(city);
+        } else {
+            results = restaurantRepository.findAll();
+        }
+
+        return results.stream()
+                .filter(Restaurant::isActive)
                 .map(this::toResponse)
                 .toList();
     }
