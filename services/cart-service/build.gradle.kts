@@ -16,5 +16,10 @@ dependencies {
     implementation(project(":common:common-config"))
     implementation(libs.spring.boot.starter.web)
     implementation(libs.spring.boot.starter.data.redis)
+    implementation(libs.spring.boot.starter.validation)
     implementation(libs.spring.cloud.starter.netflix.eureka.client)
+    implementation(libs.spring.cloud.starter.openfeign)
+    implementation(libs.bundles.observability)
+    compileOnly(libs.lombok)
+    annotationProcessor(libs.lombok)
 }
