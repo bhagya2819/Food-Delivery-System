@@ -70,6 +70,7 @@ public class RestaurantService {
                 .toList();
     }
 
+    @Cacheable(value = "restaurant_search", key = "{#name, #cuisine, #city}")
     public List<RestaurantResponse> search(String name, String cuisine, String city) {
         List<Restaurant> results = new ArrayList<>();
 
