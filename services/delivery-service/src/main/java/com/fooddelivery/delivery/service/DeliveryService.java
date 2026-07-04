@@ -3,9 +3,7 @@ package com.fooddelivery.delivery.service;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fooddelivery.delivery.entity.DeliveryAssignment;
-import com.fooddelivery.delivery.entity.DeliveryPartner;
 import com.fooddelivery.delivery.repository.DeliveryAssignmentRepository;
-import com.fooddelivery.delivery.repository.DeliveryPartnerRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
@@ -19,8 +17,8 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class DeliveryService {
 
-    private final DeliveryPartnerRepository partnerRepository;
     private final DeliveryAssignmentRepository assignmentRepository;
+    private final AssignmentEngine assignmentEngine;
     private final ObjectMapper objectMapper;
 
     @RabbitListener(queues = "delivery.order.events")
@@ -33,27 +31,19 @@ public class DeliveryService {
                 JsonNode data = event.get("data");
                 UUID orderId = UUID.fromString(data.get("orderId").asText());
                 log.info("Received order.placed for order {}, triggering assignment", orderId);
-                triggerAssignment(orderId);
+
+                DeliveryAssignment assignment = assignmentEngine.assign(orderId);
+                if (assignment == null) {
+                    DeliveryAssignment pending = DeliveryAssignment.builder()
+                            .orderId(orderId)
+                            .status("PENDING_ASSIGNMENT")
+                            .build();
+                    assignmentRepository.save(pending);
+                    log.info("Order {} queued for retry assignment", orderId);
+                }
             }
         } catch (Exception e) {
             log.error("Failed to process delivery order event: {}", e.getMessage());
         }
-    }
-
-    private void triggerAssignment(UUID orderId) {
-        var onlinePartners = partnerRepository.findByIsOnlineTrueAndIsVerifiedTrue();
-        if (onlinePartners.isEmpty()) {
-            log.warn("No online delivery partners available for order {}", orderId);
-            return;
-        }
-
-        DeliveryPartner selected = onlinePartners.get(0);
-        DeliveryAssignment assignment = DeliveryAssignment.builder()
-                .orderId(orderId)
-                .partner(selected)
-                .status("ASSIGNED")
-                .build();
-        assignmentRepository.save(assignment);
-        log.info("Delivery partner {} assigned to order {}", selected.getId(), orderId);
     }
 }

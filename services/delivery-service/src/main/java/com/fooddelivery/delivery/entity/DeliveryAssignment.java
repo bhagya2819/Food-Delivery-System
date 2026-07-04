@@ -33,7 +33,7 @@ public class DeliveryAssignment {
     private UUID orderId;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "partner_id", nullable = false)
+    @JoinColumn(name = "partner_id")
     private DeliveryPartner partner;
 
     @Column(nullable = false, length = 20)
@@ -51,4 +51,8 @@ public class DeliveryAssignment {
 
     @Column(name = "delivered_at")
     private Instant deliveredAt;
+
+    @Column(name = "retry_count")
+    @Builder.Default
+    private int retryCount = 0;
 }

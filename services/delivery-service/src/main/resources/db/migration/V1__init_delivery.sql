@@ -14,8 +14,9 @@ CREATE TABLE delivery_partners (
 CREATE TABLE delivery_assignments (
     id UUID PRIMARY KEY,
     order_id UUID NOT NULL,
-    partner_id UUID NOT NULL REFERENCES delivery_partners(id),
+    partner_id UUID REFERENCES delivery_partners(id),
     status VARCHAR(20) NOT NULL,
+    retry_count INTEGER NOT NULL DEFAULT 0,
     assigned_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     accepted_at TIMESTAMP,
     picked_up_at TIMESTAMP,
