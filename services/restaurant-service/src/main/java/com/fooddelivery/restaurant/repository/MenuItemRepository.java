@@ -12,5 +12,5 @@ public interface MenuItemRepository extends JpaRepository<MenuItem, UUID> {
 
     List<MenuItem> findByCategoryIdOrderByNameAsc(UUID categoryId);
 
-    List<MenuItem> findByRestaurantIdAndIsAvailableTrue(UUID restaurantId);
+    List<MenuItem> findByRestaurantIdAndAvailableTrue(UUID restaurantId);
 }
