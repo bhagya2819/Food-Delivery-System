@@ -1,0 +1,42 @@
+server:
+  port: 8086
+
+spring:
+  application:
+    name: payment-service
+  datasource:
+    url: jdbc:postgresql://localhost:5436/payment_service
+    username: fd_user
+    password: fd_password
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+  rabbitmq:
+    host: localhost
+    port: 5672
+    username: fd_user
+    password: fd_password
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+
+razorpay:
+  key-id: rzp_test_dummy
+  key-secret: dummy_secret
+
+stripe:
+  api-key: sk_test_dummy
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus
