@@ -16,5 +16,12 @@ dependencies {
     implementation(project(":common:common-config"))
     implementation(libs.spring.boot.starter.web)
     implementation(libs.spring.boot.starter.data.jpa)
+    implementation(libs.spring.boot.starter.amqp)
     implementation(libs.spring.cloud.starter.netflix.eureka.client)
+    implementation(libs.postgresql)
+    implementation(libs.flyway.core)
+    implementation(libs.flyway.database.postgresql)
+    implementation(libs.bundles.observability)
+    compileOnly(libs.lombok)
+    annotationProcessor(libs.lombok)
 }
