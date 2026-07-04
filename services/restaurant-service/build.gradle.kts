@@ -17,6 +17,7 @@ dependencies {
     implementation(libs.spring.boot.starter.web)
     implementation(libs.spring.boot.starter.data.jpa)
     implementation(libs.spring.boot.starter.data.redis)
+    implementation(libs.spring.boot.starter.amqp)
     implementation(libs.spring.boot.starter.validation)
     implementation(libs.spring.cloud.starter.netflix.eureka.client)
     implementation(libs.postgresql)
