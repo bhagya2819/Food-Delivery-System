@@ -3,6 +3,7 @@ import { AuthProvider } from './context/AuthContext';
 import Home from './pages/Home';
 import Login from './pages/Login';
 import Register from './pages/Register';
+import Search from './pages/Search';
 import type { ReactNode } from 'react';
 
 function ProtectedRoute({ children }: { children: ReactNode }) {
@@ -13,7 +14,7 @@ function ProtectedRoute({ children }: { children: ReactNode }) {
 
 function PublicRoute({ children }: { children: ReactNode }) {
   const token = localStorage.getItem('token');
-  if (token) return <Navigate to="/" replace />;
+  if (token) return <Navigate to="/search" replace />;
   return <>{children}</>;
 }
 
@@ -22,6 +23,7 @@ function AppRoutes() {
     <Routes>
       <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
       <Route path="/register" element={<PublicRoute><Register /></PublicRoute>} />
+      <Route path="/search" element={<ProtectedRoute><Search /></ProtectedRoute>} />
       <Route path="/" element={<ProtectedRoute><Home /></ProtectedRoute>} />
     </Routes>
   );

@@ -47,10 +47,25 @@ export interface AuthResponse {
   user: User;
 }
 
+export interface Restaurant {
+  id: string;
+  name: string;
+  cuisineType: string;
+  city: string;
+  state: string;
+  rating: number;
+  distanceKm: number;
+}
+
 export const authApi = {
   register: (data: { email: string; password: string; fullName: string; phone?: string }) =>
     api.post<ApiResponse<AuthResponse>>('/users/register', data),
 
   login: (data: { email: string; password: string }) =>
     api.post<ApiResponse<AuthResponse>>('/users/login', data),
+};
+
+export const searchApi = {
+  restaurants: (params: { q?: string; cuisine?: string; city?: string }) =>
+    api.get<ApiResponse<Restaurant[]>>('/search/restaurants', { params }),
 };
