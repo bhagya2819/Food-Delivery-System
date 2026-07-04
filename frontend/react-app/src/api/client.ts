@@ -124,3 +124,49 @@ export const cartApi = {
 
   checkout: () => api.get<ApiResponse<{ cart: Cart; taxAmount: number; finalTotal: number; canPlaceOrder: boolean; message: string }>>('/cart/checkout'),
 };
+
+export interface OrderItem {
+  id: string;
+  menuItemId: string;
+  itemName: string;
+  quantity: number;
+  unitPrice: number;
+  totalPrice: number;
+}
+
+export interface Order {
+  id: string;
+  userId: string;
+  restaurantId: string;
+  deliveryAddressId: string;
+  status: string;
+  subtotal: number;
+  deliveryFee: number;
+  tax: number;
+  discount: number;
+  totalAmount: number;
+  paymentStatus: string;
+  paymentId: string | null;
+  couponCode: string | null;
+  notes: string;
+  items: OrderItem[];
+  statusHistory: { id: string; status: string; note: string; createdAt: string }[];
+  createdAt: string;
+}
+
+export const orderApi = {
+  placeOrder: (data: { deliveryAddressId: string; notes?: string; couponCode?: string }) =>
+    api.post<ApiResponse<Order>>('/orders', data),
+
+  getOrder: (id: string) =>
+    api.get<ApiResponse<Order>>(`/orders/${id}`),
+
+  getOrders: (page?: number, size?: number) =>
+    api.get<ApiResponse<Order[]>>('/orders', { params: { page, size } }),
+
+  cancelOrder: (id: string) =>
+    api.patch<ApiResponse<Order>>(`/orders/${id}/cancel`),
+
+  getStatus: (id: string) =>
+    api.get<ApiResponse<string>>(`/orders/${id}/status`),
+};
