@@ -1,0 +1,20 @@
+server:
+  port: 8082
+
+spring:
+  application:
+    name: restaurant-service
+  datasource:
+    url: jdbc:postgresql://fd-postgres-restaurants:5432/restaurant_service
+    username: fd_user
+    password: fd_password
+  jpa:
+    hibernate:
+      ddl-auto: validate
+  flyway:
+    enabled: true
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://eureka-server:8761/eureka
