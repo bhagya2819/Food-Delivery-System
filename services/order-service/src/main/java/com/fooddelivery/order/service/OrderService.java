@@ -42,6 +42,7 @@ public class OrderService {
     private final OrderStatusLogRepository logRepository;
     private final OrderEventPublisher eventPublisher;
     private final CartFeignClient cartClient;
+    private final com.fooddelivery.order.config.UserFeignClient userClient;
     private final ObjectMapper objectMapper;
 
     @Transactional
@@ -53,16 +54,28 @@ public class OrderService {
 
         var cart = checkout.getCart();
 
+        BigDecimal deliveryFee = cart.getDeliveryFee();
+        try {
+            var subResp = userClient.getSubscription(userId);
+            var sub = subResp.getData();
+            if (sub != null && "ACTIVE".equals(sub.getStatus()) && cart.getSubtotal().compareTo(BigDecimal.ZERO) > 0) {
+                deliveryFee = BigDecimal.ZERO;
+                log.info("Free delivery applied for subscriber user {}", userId);
+            }
+        } catch (Exception e) {
+            log.info("No active subscription found for user {}, using standard delivery fee", userId);
+        }
+
         Order order = Order.builder()
                 .userId(userId)
                 .restaurantId(cart.getRestaurantId())
                 .deliveryAddressId(request.getDeliveryAddressId())
                 .status(OrderStatus.PLACED)
                 .subtotal(cart.getSubtotal())
-                .deliveryFee(cart.getDeliveryFee())
+                .deliveryFee(deliveryFee)
                 .tax(checkout.getTaxAmount())
                 .discount(cart.getDiscount())
-                .totalAmount(checkout.getFinalTotal())
+                .totalAmount(checkout.getFinalTotal().subtract(cart.getDeliveryFee()).add(deliveryFee))
                 .paymentStatus(PaymentStatus.PENDING)
                 .couponCode(cart.getCouponCode())
                 .notes(request.getNotes())
