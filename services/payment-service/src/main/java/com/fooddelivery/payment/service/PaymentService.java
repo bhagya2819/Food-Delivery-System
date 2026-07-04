@@ -19,6 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @Slf4j
@@ -81,7 +82,22 @@ public class PaymentService {
 
     public void handleRazorpayCallback(String paymentId, String razorpayPaymentId, String razorpayOrderId, String status, String signature) {
         log.info("Razorpay callback: payment={}, razorpay={}, status={}", paymentId, razorpayPaymentId, status);
-        confirmWebhook("RAZORPAY", razorpayPaymentId, "VERIFIED".equals(signature) ? status : "FAILED");
+        Payment payment = paymentRepo.findById(UUID.fromString(paymentId))
+                .orElseThrow(() -> new NotFoundException("Payment", UUID.fromString(paymentId)));
+
+        payment.setGateway("RAZORPAY");
+        payment.setGatewayPaymentId(razorpayPaymentId);
+        payment.setGatewayOrderId(razorpayOrderId);
+
+        if ("VERIFIED".equals(signature) && "CAPTURED".equals(status)) {
+            payment.setStatus("COMPLETED");
+            payment = paymentRepo.save(payment);
+            eventPublisher.publishPaymentCompleted(payment);
+        } else {
+            payment.setStatus("FAILED");
+            payment = paymentRepo.save(payment);
+            eventPublisher.publishPaymentFailed(payment);
+        }
     }
 
     public void handleStripeCallback(String paymentIntentId, String status) {
@@ -117,9 +133,9 @@ public class PaymentService {
     }
 
     @RabbitListener(queues = "payment.order.events")
-    public void handleOrderEvent(String message) {
+    public void handleOrderEvent(Map<String, Object> message) {
         try {
-            JsonNode event = objectMapper.readTree(message);
+            JsonNode event = objectMapper.valueToTree(message);
             String type = event.get("type").asText();
 
             if ("order.placed".equals(type)) {

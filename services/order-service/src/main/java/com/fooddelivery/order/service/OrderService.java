@@ -29,6 +29,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @Slf4j
@@ -45,9 +46,9 @@ public class OrderService {
 
     @Transactional
     public OrderResponse placeOrder(UUID userId, OrderRequest request) {
-        CheckoutDto checkout = cartClient.getCheckout();
-        if (!checkout.isCanPlaceOrder()) {
-            throw new BadRequestException(checkout.getMessage());
+        CheckoutDto checkout = cartClient.getCheckout().getData();
+        if (checkout == null || !checkout.isCanPlaceOrder()) {
+            throw new BadRequestException(checkout != null ? checkout.getMessage() : "Cannot place order");
         }
 
         var cart = checkout.getCart();
@@ -113,9 +114,9 @@ public class OrderService {
     }
 
     @RabbitListener(queues = "order.status.updates")
-    public void handlePaymentEvent(String message) {
+    public void handlePaymentEvent(Map<String, Object> message) {
         try {
-            JsonNode event = objectMapper.readTree(message);
+            JsonNode event = objectMapper.valueToTree(message);
             String type = event.get("type").asText();
             JsonNode data = event.get("data");
 
@@ -147,9 +148,9 @@ public class OrderService {
     }
 
     @RabbitListener(queues = "order.delivery.updates")
-    public void handleDeliveryEvent(String message) {
+    public void handleDeliveryEvent(Map<String, Object> message) {
         try {
-            JsonNode event = objectMapper.readTree(message);
+            JsonNode event = objectMapper.valueToTree(message);
             String type = event.get("type").asText();
             JsonNode data = event.get("data");
             UUID orderId = UUID.fromString(data.get("orderId").asText());

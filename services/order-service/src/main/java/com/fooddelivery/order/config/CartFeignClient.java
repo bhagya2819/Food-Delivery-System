@@ -1,5 +1,6 @@
 package com.fooddelivery.order.config;
 
+import com.fooddelivery.common.lib.dto.ApiResponse;
 import com.fooddelivery.order.dto.CheckoutDto;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -8,5 +9,5 @@ import org.springframework.web.bind.annotation.GetMapping;
 public interface CartFeignClient {
 
     @GetMapping("/cart/checkout")
-    CheckoutDto getCheckout();
+    ApiResponse<CheckoutDto> getCheckout();
 }
